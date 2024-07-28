@@ -70,6 +70,30 @@
             justify-content: space-between;
             align-items: center;
         }
+        .nav-tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        .nav-tabs .nav-item {
+            margin-bottom: -1px;
+        }
+        .nav-tabs .nav-link {
+            border: 1px solid transparent;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
+            padding: 0.5rem 1rem;
+        }
+        .nav-tabs .nav-link.active {
+            color: #495057;
+            background-color: #fff;
+            border-color: #ddd #ddd #fff;
+        }
+        .tab-content > .tab-pane {
+            display: none;
+        }
+        .tab-content > .active {
+            display: block;
+        }
         h2 {
             margin-top: 1rem;
         }
@@ -81,28 +105,47 @@
     </header>
 
     <div class="container">
-        <form id="addDomainForm" class="form-inline mb-3">
-            <div class="form-group">
-                <label for="domain" class="sr-only">Enter Domain:</label>
-                <input type="text" class="form-control" id="domain" name="domain" placeholder="Enter Domain" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Add Domain</button>
-        </form>
-
-        <h2>Domains:</h2>
-        <ul id="domainList" class="list-group mb-3">
-            {% for domain in domains %}
-                <li class="list-group-item">{{ domain }}
-                    <button class="btn btn-remove" onclick="removeDomain('{{ domain }}')">Remove</button>
-                </li>
-            {% endfor %}
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="subdomain-tab" data-toggle="tab" href="#subdomain" role="tab" aria-controls="subdomain" aria-selected="true">Subdomain Scan</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="takeover-tab" data-toggle="tab" href="#takeover" role="tab" aria-controls="takeover" aria-selected="false">Subdomain Takeover</a>
+            </li>
         </ul>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="subdomain" role="tabpanel" aria-labelledby="subdomain-tab">
+                <form id="addDomainForm" class="form-inline mb-3">
+                    <div class="form-group">
+                        <label for="domain" class="sr-only">Enter Domain:</label>
+                        <input type="text" class="form-control" id="domain" name="domain" placeholder="Enter Domain" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Domain</button>
+                </form>
 
-        <button id="scanButton" class="btn btn-danger mb-3">Start Scan</button>
-        <h2>Status:</h2>
-        <p id="status">{{ status }}</p>
-        <h2>Results:</h2>
-        <pre id="results">{% for line in results %}{{ line }}\n{% endfor %}</pre>
+                <h2>Domains:</h2>
+                <ul id="domainList" class="list-group mb-3">
+                    {% for domain in domains %}
+                        <li class="list-group-item">{{ domain }}
+                            <button class="btn btn-remove" onclick="removeDomain('{{ domain }}')">Remove</button>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <button id="scanButton" class="btn btn-danger mb-3">Start Scan</button>
+                <h2>Status:</h2>
+                <p id="status">{{ status }}</p>
+                <h2>Results:</h2>
+                <pre id="results">{% for line in results %}{{ line }}\n{% endfor %}</pre>
+            </div>
+            <div class="tab-pane fade" id="takeover" role="tabpanel" aria-labelledby="takeover-tab">
+                <button id="takeoverScanButton" class="btn btn-danger mb-3">Takeover Scan</button>
+                <h2>Takeover Status:</h2>
+                <p id="takeoverStatus">{{ takeover_status }}</p>
+                <h2>Takeover Results:</h2>
+                <pre id="takeoverResults">{% for line in takeover_results %}{{ line }}\n{% endfor %}</pre>
+            </div>
+        </div>
     </div>
 
     <footer>
@@ -140,6 +183,15 @@
             checkStatus();
         });
 
+        document.getElementById('takeoverScanButton').addEventListener('click', async () => {
+            const response = await fetch('/takeover_scan', {
+                method: 'POST',
+            });
+            const result = await response.json();
+            document.getElementById('takeoverStatus').textContent = result.status;
+            checkTakeoverStatus();
+        });
+
         async function removeDomain(domain) {
             const response = await fetch('/remove_domain', {
                 method: 'POST',
@@ -175,11 +227,29 @@
             }, 5000); // Check every 5 seconds
         }
 
+        async function checkTakeoverStatus() {
+            const interval = setInterval(async () => {
+                const response = await fetch('/takeover_status');
+                const result = await response.json();
+                if (result.status === 'Takeover scan completed') {
+                    clearInterval(interval);
+                    document.getElementById('takeoverStatus').textContent = result.status;
+                    document.getElementById('takeoverResults').textContent = result.data.join('\n');
+                } else {
+                    document.getElementById('takeoverStatus').textContent = result.status;
+                }
+            }, 5000); // Check every 5 seconds
+        }
+
         // Automatically check status if the scan is in progress
         document.addEventListener('DOMContentLoaded', (event) => {
             const currentStatus = document.getElementById('status').textContent;
             if (currentStatus === 'Scan started') {
                 checkStatus();
+            }
+            const currentTakeoverStatus = document.getElementById('takeoverStatus').textContent;
+            if (currentTakeoverStatus === 'Takeover scan started') {
+                checkTakeoverStatus();
             }
         });
     </script>
