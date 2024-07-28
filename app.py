@@ -20,6 +20,18 @@ def add_domain():
         file.write(f"{domain}\n")
     return jsonify({"status": "Domain added", "domain": domain})
 
+@app.route('/remove_domain', methods=['POST'])
+def remove_domain():
+    domain = request.form['domain']
+    if os.path.exists(DOMAINS_FILE):
+        with open(DOMAINS_FILE, 'r') as file:
+            domains = file.read().splitlines()
+        if domain in domains:
+            domains.remove(domain)
+            with open(DOMAINS_FILE, 'w') as file:
+                file.write("\n".join(domains) + "\n")
+    return jsonify({"status": "Domain removed", "domain": domain})
+
 @app.route('/scan', methods=['POST'])
 def scan():
     subprocess.run(['tmux', 'new-session', '-d', 'cd /home/Ubuntu/subdomain-scan-nuclei && sudo sh subdomain-finder.sh'])
