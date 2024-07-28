@@ -100,9 +100,9 @@
 
         <button id="scanButton" class="btn btn-danger mb-3">Start Scan</button>
         <h2>Status:</h2>
-        <p id="status">Idle</p>
+        <p id="status">{{ status }}</p>
         <h2>Results:</h2>
-        <pre id="results"></pre>
+        <pre id="results">{% for line in results %}{{ line }}\n{% endfor %}</pre>
     </div>
 
     <footer>
