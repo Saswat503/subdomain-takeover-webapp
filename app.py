@@ -3,7 +3,7 @@ import subprocess
 import os
 
 app = Flask(__name__)
-DOMAINS_FILE = '/home/ubuntu/subdomain-scan-nuclei/domains.txt'
+DOMAINS_FILE = '/home/Ubuntu/subdomain-scan-nuclei/domains.txt'
 
 @app.route('/')
 def index():
@@ -22,15 +22,13 @@ def add_domain():
 
 @app.route('/scan', methods=['POST'])
 def scan():
-    # Start the tmux session to run the subdomain scan
-    subprocess.run(['tmux', 'new-session', '-d', 'cd ~/subdomain-scan-nuclei && sudo sh subdomain-finder.sh'])
+    subprocess.run(['tmux', 'new-session', '-d', 'cd /home/Ubuntu/subdomain-scan-nuclei && sudo sh subdomain-finder.sh'])
     return jsonify({"status": "Scan started"})
 
 @app.route('/status', methods=['GET'])
 def status():
-    # Check if the scan is completed by looking for the subdomains2.txt file
-    if os.path.exists('/home/ubuntu/subdomain-scan-nuclei/subdomains2.txt'):
-        with open('/home/ubuntu/subdomain-scan-nuclei/subdomains2.txt', 'r') as file:
+    if os.path.exists('/home/Ubuntu/subdomain-scan-nuclei/subdomains2.txt'):
+        with open('/home/Ubuntu/subdomain-scan-nuclei/subdomains2.txt', 'r') as file:
             data = file.read().splitlines()
         return jsonify({"status": "Scan completed", "data": data})
     else:
