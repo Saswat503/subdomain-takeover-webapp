@@ -2,29 +2,105 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Subdomain Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+        footer {
+            background-color: #f1f1f1;
+            color: #333;
+            text-align: center;
+            padding: 1rem;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+        .container {
+            flex: 1;
+            padding: 2rem;
+        }
+        .form-inline {
+            display: flex;
+            align-items: center;
+        }
+        .form-inline .form-group {
+            margin-right: 1rem;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #007bff;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        .list-group {
+            list-style: none;
+            padding: 0;
+        }
+        .list-group-item {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        h2 {
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
-    <h1>Subdomain Scanner</h1>
+    <header>
+        <h1>Subdomain Scanner</h1>
+    </header>
 
-    <form id="addDomainForm">
-        <label for="domain">Enter Domain:</label>
-        <input type="text" id="domain" name="domain" required>
-        <button type="submit">Add Domain</button>
-    </form>
+    <div class="container">
+        <form id="addDomainForm" class="form-inline mb-3">
+            <div class="form-group">
+                <label for="domain" class="sr-only">Enter Domain:</label>
+                <input type="text" class="form-control" id="domain" name="domain" placeholder="Enter Domain" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Domain</button>
+        </form>
 
-    <h2>Domains:</h2>
-    <ul id="domainList">
-        {% for domain in domains %}
-            <li>{{ domain }}</li>
-        {% endfor %}
-    </ul>
+        <h2>Domains:</h2>
+        <ul id="domainList" class="list-group mb-3">
+            {% for domain in domains %}
+                <li class="list-group-item">{{ domain }}</li>
+            {% endfor %}
+        </ul>
 
-    <button id="scanButton">Start Scan</button>
-    <h2>Status:</h2>
-    <p id="status">Idle</p>
-    <h2>Results:</h2>
-    <pre id="results"></pre>
+        <button id="scanButton" class="btn btn-danger mb-3">Start Scan</button>
+        <h2>Status:</h2>
+        <p id="status">Idle</p>
+        <h2>Results:</h2>
+        <pre id="results"></pre>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Subdomain Scanner</p>
+    </footer>
 
     <script>
         document.getElementById('addDomainForm').addEventListener('submit', async (e) => {
@@ -42,6 +118,7 @@
                 const domainList = document.getElementById('domainList');
                 const newDomain = document.createElement('li');
                 newDomain.textContent = result.domain;
+                newDomain.className = 'list-group-item';
                 domainList.appendChild(newDomain);
                 document.getElementById('domain').value = ''; // Clear the input
             }
