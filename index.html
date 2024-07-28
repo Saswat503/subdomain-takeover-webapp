@@ -24,9 +24,7 @@
             color: #333;
             text-align: center;
             padding: 1rem;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
+            margin-top: auto;
         }
         .container {
             flex: 1;
@@ -52,6 +50,10 @@
         .btn-danger {
             background-color: #dc3545;
         }
+        .btn-remove {
+            background-color: #ff4c4c;
+            margin-left: 1rem;
+        }
         .btn:hover {
             opacity: 0.8;
         }
@@ -64,6 +66,9 @@
             border: 1px solid #ddd;
             padding: 0.5rem;
             margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         h2 {
             margin-top: 1rem;
@@ -87,7 +92,9 @@
         <h2>Domains:</h2>
         <ul id="domainList" class="list-group mb-3">
             {% for domain in domains %}
-                <li class="list-group-item">{{ domain }}</li>
+                <li class="list-group-item">{{ domain }}
+                    <button class="btn btn-remove" onclick="removeDomain('{{ domain }}')">Remove</button>
+                </li>
             {% endfor %}
         </ul>
 
@@ -117,8 +124,8 @@
             if (result.status === "Domain added") {
                 const domainList = document.getElementById('domainList');
                 const newDomain = document.createElement('li');
-                newDomain.textContent = result.domain;
                 newDomain.className = 'list-group-item';
+                newDomain.innerHTML = `${result.domain} <button class="btn btn-remove" onclick="removeDomain('${result.domain}')">Remove</button>`;
                 domainList.appendChild(newDomain);
                 document.getElementById('domain').value = ''; // Clear the input
             }
@@ -132,6 +139,27 @@
             document.getElementById('status').textContent = result.status;
             checkStatus();
         });
+
+        async function removeDomain(domain) {
+            const response = await fetch('/remove_domain', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `domain=${domain}`,
+            });
+            const result = await response.json();
+            if (result.status === "Domain removed") {
+                const domainList = document.getElementById('domainList');
+                const items = domainList.getElementsByTagName('li');
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].textContent.includes(domain)) {
+                        domainList.removeChild(items[i]);
+                        break;
+                    }
+                }
+            }
+        }
 
         async function checkStatus() {
             const interval = setInterval(async () => {
