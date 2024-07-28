@@ -1,6 +1,5 @@
 from flask import Flask, request, render_template, jsonify
 import subprocess
-import time
 import os
 
 app = Flask(__name__)
@@ -18,8 +17,8 @@ def scan():
 @app.route('/status', methods=['GET'])
 def status():
     # Check if the scan is completed by looking for the subdomains2.txt file
-    if os.path.exists('~/subdomain-scan-nuclei/subdomains2.txt'):
-        with open('~/subdomain-scan-nuclei/subdomains2.txt', 'r') as file:
+    if os.path.exists('/home/ubuntu/subdomain-scan-nuclei/subdomains2.txt'):
+        with open('/home/ubuntu/subdomain-scan-nuclei/subdomains2.txt', 'r') as file:
             data = file.read().splitlines()
         return jsonify({"status": "Scan completed", "data": data})
     else:
