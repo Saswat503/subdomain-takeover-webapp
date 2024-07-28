@@ -6,6 +6,20 @@
 </head>
 <body>
     <h1>Subdomain Scanner</h1>
+
+    <form id="addDomainForm">
+        <label for="domain">Enter Domain:</label>
+        <input type="text" id="domain" name="domain" required>
+        <button type="submit">Add Domain</button>
+    </form>
+
+    <h2>Domains:</h2>
+    <ul id="domainList">
+        {% for domain in domains %}
+            <li>{{ domain }}</li>
+        {% endfor %}
+    </ul>
+
     <button id="scanButton">Start Scan</button>
     <h2>Status:</h2>
     <p id="status">Idle</p>
@@ -13,8 +27,27 @@
     <pre id="results"></pre>
 
     <script>
+        document.getElementById('addDomainForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const domain = document.getElementById('domain').value;
+            const response = await fetch('/add_domain', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `domain=${domain}`,
+            });
+            const result = await response.json();
+            if (result.status === "Domain added") {
+                const domainList = document.getElementById('domainList');
+                const newDomain = document.createElement('li');
+                newDomain.textContent = result.domain;
+                domainList.appendChild(newDomain);
+                document.getElementById('domain').value = ''; // Clear the input
+            }
+        });
+
         document.getElementById('scanButton').addEventListener('click', async () => {
-            // Start the scan
             const response = await fetch('/scan', {
                 method: 'POST',
             });
@@ -24,7 +57,6 @@
         });
 
         async function checkStatus() {
-            // Check the scan status periodically
             const interval = setInterval(async () => {
                 const response = await fetch('/status');
                 const result = await response.json();
