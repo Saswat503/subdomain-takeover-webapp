@@ -6,6 +6,8 @@ app = Flask(__name__)
 DOMAINS_FILE = '/home/Ubuntu/subdomain-scan-nuclei/domains.txt'
 STATUS_FILE = '/home/Ubuntu/subdomain-scan-nuclei/status.txt'
 RESULTS_FILE = '/home/Ubuntu/subdomain-scan-nuclei/subdomains2.txt'
+TAKEOVER_OUTPUT_FILE = '/home/Ubuntu/subdomain-scan-nuclei/output.txt'
+TAKEOVER_STATUS_FILE = '/home/Ubuntu/subdomain-scan-nuclei/takeover_status.txt'
 
 def read_status():
     if os.path.exists(STATUS_FILE):
@@ -14,9 +16,23 @@ def read_status():
         return status
     return 'Idle'
 
+def read_takeover_status():
+    if os.path.exists(TAKEOVER_STATUS_FILE):
+        with open(TAKEOVER_STATUS_FILE, 'r') as file:
+            status = file.read().strip()
+        return status
+    return 'Idle'
+
 def read_results():
     if os.path.exists(RESULTS_FILE):
         with open(RESULTS_FILE, 'r') as file:
+            results = file.read().splitlines()
+        return results
+    return []
+
+def read_takeover_results():
+    if os.path.exists(TAKEOVER_OUTPUT_FILE):
+        with open(TAKEOVER_OUTPUT_FILE, 'r') as file:
             results = file.read().splitlines()
         return results
     return []
@@ -65,6 +81,23 @@ def status():
         with open(STATUS_FILE, 'w') as file:
             file.write(status)
     results = read_results()
+    return jsonify({"status": status, "data": results})
+
+@app.route('/takeover_scan', methods=['POST'])
+def takeover_scan():
+    with open(TAKEOVER_STATUS_FILE, 'w') as file:
+        file.write('Takeover scan started')
+    subprocess.run(['tmux', 'new-session', '-d', 'cd /home/Ubuntu/subdomain-scan-nuclei && sudo nuclei -l subdomains2.txt -t ./ -o output.txt'])
+    return jsonify({"status": "Takeover scan started"})
+
+@app.route('/takeover_status', methods=['GET'])
+def takeover_status():
+    status = read_takeover_status()
+    if status == 'Takeover scan started' and os.path.exists(TAKEOVER_OUTPUT_FILE):
+        status = 'Takeover scan completed'
+        with open(TAKEOVER_STATUS_FILE, 'w') as file:
+            file.write(status)
+    results = read_takeover_results()
     return jsonify({"status": status, "data": results})
 
 if __name__ == '__main__':
