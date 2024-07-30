@@ -56,6 +56,7 @@ def index():
 def add_domain():
     try:
         domain = request.form['domain']
+        logging.debug(f"Adding domain: {domain}")
         with open(DOMAINS_FILE, 'a') as file:
             file.write(f"{domain}\n")
         return jsonify({"status": "Domain added", "domain": domain})
@@ -67,6 +68,7 @@ def add_domain():
 def remove_domain():
     try:
         domain = request.form['domain']
+        logging.debug(f"Removing domain: {domain}")
         if os.path.exists(DOMAINS_FILE):
             with open(DOMAINS_FILE, 'r') as file:
                 domains = file.read().splitlines()
@@ -82,6 +84,7 @@ def remove_domain():
 @app.route('/scan', methods=['POST'])
 def scan():
     try:
+        logging.debug("Starting scan")
         with open(STATUS_FILE, 'w') as file:
             file.write('Scan started')
         subprocess.run(['tmux', 'new-session', '-d', 'cd /home/Ubuntu/subdomain-scan-nuclei && sudo sh subdomain-finder.sh'])
@@ -94,6 +97,7 @@ def scan():
 def status():
     try:
         status = read_status()
+        logging.debug(f"Current status: {status}")
         if status == 'Scan started' and os.path.exists(RESULTS_FILE):
             status = 'Scan completed'
             with open(STATUS_FILE, 'w') as file:
@@ -107,6 +111,7 @@ def status():
 @app.route('/takeover_scan', methods=['POST'])
 def takeover_scan():
     try:
+        logging.debug("Starting takeover scan")
         with open(TAKEOVER_STATUS_FILE, 'w') as file:
             file.write('Takeover scan started')
         subprocess.run(['tmux', 'new-session', '-d', 'cd /home/Ubuntu/subdomain-scan-nuclei && sudo nuclei -l subdomains2.txt -t ./ -o output.txt'])
@@ -119,6 +124,7 @@ def takeover_scan():
 def takeover_status():
     try:
         status = read_takeover_status()
+        logging.debug(f"Current takeover status: {status}")
         if status == 'Takeover scan started' and os.path.exists(TAKEOVER_OUTPUT_FILE):
             status = 'Takeover scan completed'
             with open(TAKEOVER_STATUS_FILE, 'w') as file:
