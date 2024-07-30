@@ -1,8 +1,11 @@
 from flask import Flask, request, render_template, jsonify
 import subprocess
 import os
+import logging
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.DEBUG)
+
 DOMAINS_FILE = '/home/Ubuntu/subdomain-scan-nuclei/domains.txt'
 STATUS_FILE = '/home/Ubuntu/subdomain-scan-nuclei/status.txt'
 RESULTS_FILE = '/home/Ubuntu/subdomain-scan-nuclei/subdomains2.txt'
@@ -45,60 +48,86 @@ def index():
             domains = file.read().splitlines()
     status = read_status()
     results = read_results()
-    return render_template('index.html', domains=domains, status=status, results=results)
+    takeover_status = read_takeover_status()
+    takeover_results = read_takeover_results()
+    return render_template('index.html', domains=domains, status=status, results=results, takeover_status=takeover_status, takeover_results=takeover_results)
 
 @app.route('/add_domain', methods=['POST'])
 def add_domain():
-    domain = request.form['domain']
-    with open(DOMAINS_FILE, 'a') as file:
-        file.write(f"{domain}\n")
-    return jsonify({"status": "Domain added", "domain": domain})
+    try:
+        domain = request.form['domain']
+        with open(DOMAINS_FILE, 'a') as file:
+            file.write(f"{domain}\n")
+        return jsonify({"status": "Domain added", "domain": domain})
+    except Exception as e:
+        logging.exception("Error in /add_domain")
+        return jsonify({"status": "Error", "message": str(e)}), 500
 
 @app.route('/remove_domain', methods=['POST'])
 def remove_domain():
-    domain = request.form['domain']
-    if os.path.exists(DOMAINS_FILE):
-        with open(DOMAINS_FILE, 'r') as file:
-            domains = file.read().splitlines()
-        if domain in domains:
-            domains.remove(domain)
-            with open(DOMAINS_FILE, 'w') as file:
-                file.write("\n".join(domains) + "\n")
-    return jsonify({"status": "Domain removed", "domain": domain})
+    try:
+        domain = request.form['domain']
+        if os.path.exists(DOMAINS_FILE):
+            with open(DOMAINS_FILE, 'r') as file:
+                domains = file.read().splitlines()
+            if domain in domains:
+                domains.remove(domain)
+                with open(DOMAINS_FILE, 'w') as file:
+                    file.write("\n".join(domains) + "\n")
+        return jsonify({"status": "Domain removed", "domain": domain})
+    except Exception as e:
+        logging.exception("Error in /remove_domain")
+        return jsonify({"status": "Error", "message": str(e)}), 500
 
 @app.route('/scan', methods=['POST'])
 def scan():
-    with open(STATUS_FILE, 'w') as file:
-        file.write('Scan started')
-    subprocess.run(['tmux', 'new-session', '-d', 'cd /home/Ubuntu/subdomain-scan-nuclei && sudo sh subdomain-finder.sh'])
-    return jsonify({"status": "Scan started"})
+    try:
+        with open(STATUS_FILE, 'w') as file:
+            file.write('Scan started')
+        subprocess.run(['tmux', 'new-session', '-d', 'cd /home/Ubuntu/subdomain-scan-nuclei && sudo sh subdomain-finder.sh'])
+        return jsonify({"status": "Scan started"})
+    except Exception as e:
+        logging.exception("Error in /scan")
+        return jsonify({"status": "Error", "message": str(e)}), 500
 
 @app.route('/status', methods=['GET'])
 def status():
-    status = read_status()
-    if status == 'Scan started' and os.path.exists(RESULTS_FILE):
-        status = 'Scan completed'
-        with open(STATUS_FILE, 'w') as file:
-            file.write(status)
-    results = read_results()
-    return jsonify({"status": status, "data": results})
+    try:
+        status = read_status()
+        if status == 'Scan started' and os.path.exists(RESULTS_FILE):
+            status = 'Scan completed'
+            with open(STATUS_FILE, 'w') as file:
+                file.write(status)
+        results = read_results()
+        return jsonify({"status": status, "data": results})
+    except Exception as e:
+        logging.exception("Error in /status")
+        return jsonify({"status": "Error", "message": str(e)}), 500
 
 @app.route('/takeover_scan', methods=['POST'])
 def takeover_scan():
-    with open(TAKEOVER_STATUS_FILE, 'w') as file:
-        file.write('Takeover scan started')
-    subprocess.run(['tmux', 'new-session', '-d', 'cd /home/Ubuntu/subdomain-scan-nuclei && sudo nuclei -l subdomains2.txt -t ./ -o output.txt'])
-    return jsonify({"status": "Takeover scan started"})
+    try:
+        with open(TAKEOVER_STATUS_FILE, 'w') as file:
+            file.write('Takeover scan started')
+        subprocess.run(['tmux', 'new-session', '-d', 'cd /home/Ubuntu/subdomain-scan-nuclei && sudo nuclei -l subdomains2.txt -t ./ -o output.txt'])
+        return jsonify({"status": "Takeover scan started"})
+    except Exception as e:
+        logging.exception("Error in /takeover_scan")
+        return jsonify({"status": "Error", "message": str(e)}), 500
 
 @app.route('/takeover_status', methods=['GET'])
 def takeover_status():
-    status = read_takeover_status()
-    if status == 'Takeover scan started' and os.path.exists(TAKEOVER_OUTPUT_FILE):
-        status = 'Takeover scan completed'
-        with open(TAKEOVER_STATUS_FILE, 'w') as file:
-            file.write(status)
-    results = read_takeover_results()
-    return jsonify({"status": status, "data": results})
+    try:
+        status = read_takeover_status()
+        if status == 'Takeover scan started' and os.path.exists(TAKEOVER_OUTPUT_FILE):
+            status = 'Takeover scan completed'
+            with open(TAKEOVER_STATUS_FILE, 'w') as file:
+                file.write(status)
+        results = read_takeover_results()
+        return jsonify({"status": status, "data": results})
+    except Exception as e:
+        logging.exception("Error in /takeover_status")
+        return jsonify({"status": "Error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
